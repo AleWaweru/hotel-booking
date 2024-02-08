@@ -15,6 +15,14 @@ import {
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
+import { useState } from "react";
+import { UploadButton } from "../uploadthing";
+import { useToast } from "../ui/use-toast";
+import Image from "next/image";
+import { Button } from "../ui/button";
+import { Loader2, XCircle } from "lucide-react";
+import axios from "axios";
+import { Description } from "@radix-ui/react-toast";
 
 interface AddHotelFormProps {
   hotel: HotelWithRooms | null;
@@ -56,7 +64,13 @@ const formSchema = z.object({
   swimmingPool: z.boolean().optional(),
   coffeeShop: z.boolean().optional(),
 });
+
 const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
+  const [image, setImage] = useState<string | undefined>(hotel?.image);
+  const [imageIsDeleting, setImageIsDeleting] = useState(false);
+
+  const { toast } = useToast();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -85,11 +99,39 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
   }
+
+  const handleImageDelete = (image: string) => {
+    setImageIsDeleting(true);
+    const imageKey = image.substring(image.lastIndexOf("/") + 1);
+    axios
+      .post("/api/uploadthing/delete", { imageKey })
+      .then((res) => {
+        if (res.data.success) {
+          setImage("");
+          toast({
+            variant: "success",
+            description: "Image removed",
+          });
+        }
+      })
+      .catch(() => {
+        toast({
+          variant: "destructive",
+          description: "something went wrong",
+        });
+      })
+      .finally(() => {
+        setImageIsDeleting(false);
+      });
+  };
+
   return (
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <h3 className="text-lg font-semibold">{hotel? 'Update your hotel!':'Describe your hotel!'}</h3>
+          <h3 className="text-lg font-semibold">
+            {hotel ? "Update your hotel!" : "Describe your hotel!"}
+          </h3>
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1 flex flex-col gap-6">
               <FormField
@@ -97,7 +139,7 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hotel Title</FormLabel>
+                    <FormLabel>Hotel Title *</FormLabel>
                     <FormDescription>Provide your hotel name</FormDescription>
                     <FormControl>
                       <Input placeholder="Beach Hotel" {...field} />
@@ -107,44 +149,323 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
                 )}
               />
             </div>
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hotel Description</FormLabel>
-                    <FormDescription>Provide a detailed desciption of your hotel</FormDescription>
-                    <FormControl>
-                      <Textarea placeholder="Beach Hotel is parked with many awesome amenities" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div>
-                <FormLabel>Choose Amenities</FormLabel>
-                <FormDescription>Choose Amenities popular in your hotel</FormDescription>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                    <FormField 
-                     control={form.control}
-                     name="gym"
-                     render={({ field }) => (
-                       <FormItem className="flex flex-row 
-                       items-end space-x-3 rounded-md border p-4
-                       ">
-                         <FormControl>
-                            <Checkbox checked={field.value}
-                            onCheckedChange={field.onChange}
-                            />
-                         </FormControl>
-                         <FormLabel>Gym</FormLabel>
-                       </FormItem>
-                     )}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hotel Description *</FormLabel>
+                  <FormDescription>
+                    Provide a detailed desciption of your hotel
+                  </FormDescription>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Beach Hotel is parked with many awesome amenities"
+                      {...field}
                     />
-                </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div>
+              <FormLabel>Choose Amenities</FormLabel>
+              <FormDescription>
+                Choose Amenities popular in your hotel
+              </FormDescription>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <FormField
+                  control={form.control}
+                  name="gym"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Gym</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="spa"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>SPA</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bar"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Bar</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="laundry"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Laundry Facilities</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="restaurant"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Restaurant</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="shopping"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Shopping</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="freeParking"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Free Parking</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bikeRental"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Bike Rental</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="freewifi"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Free Wifi</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="swimmingPool"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Swimming Pool</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="movieNights"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Movie Nights</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="coffeeShop"
+                  render={({ field }) => (
+                    <FormItem
+                      className="flex flex-row 
+                       items-end space-x-3 rounded-md border p-4
+                       "
+                    >
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Coffee Shop</FormLabel>
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
-            <div className="flex-1 flex flex-col gap-6">Part 2</div>
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-3">
+                  <FormLabel>Upload an Image *</FormLabel>
+                  <FormDescription>
+                    Choose an image that will show-case your hotel nicely
+                  </FormDescription>
+                  <FormControl>
+                    {image ? (
+                      <>
+                        <div className="relative max-w-[400px] min-w-[200px] max-h-[400px] min-h-[200px] mt-4">
+                          <Image
+                            fill
+                            src={image}
+                            alt="Hotel Image"
+                            className="object-contain "
+                          />
+                          <Button
+                            onClick={() => handleImageDelete(image)}
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="absolute right-[-12px] top-0"
+                          >
+                            {imageIsDeleting ? <Loader2 /> : <XCircle />}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          className="flex flex-col items-center max-w-[400px] p-12 border-2 
+                        border-dashed border-primary/50 rounded mt-4"
+                        >
+                          <UploadButton
+                            endpoint="imageUploader"
+                            onClientUploadComplete={(res) => {
+                              console.log("Files: ", res);
+                              setImage(res[0].url);
+                              toast({
+                                variant: "success",
+                                description: "🎉 Upload completed",
+                              });
+                            }}
+                            onUploadError={(error: Error) => {
+                              toast({
+                                variant: "destructive",
+                                description: `ERROR! ${error.message}`,
+                              });
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex-1 flex flex-col gap-6">Part 2</div>
         </form>
       </Form>
     </div>
