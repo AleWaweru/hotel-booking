@@ -15,14 +15,23 @@ import {
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UploadButton } from "../uploadthing";
 import { useToast } from "../ui/use-toast";
 import Image from "next/image";
 import { Button } from "../ui/button";
-import { Loader2, XCircle } from "lucide-react";
+import { Loader2, Pencil, PencilLine, XCircle } from "lucide-react";
 import axios from "axios";
-import { Description } from "@radix-ui/react-toast";
+import useLocation from "@/hooks/useLocation";
+import { ICity, IState } from "country-state-city";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 interface AddHotelFormProps {
   hotel: HotelWithRooms | null;
@@ -68,12 +77,18 @@ const formSchema = z.object({
 const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
   const [image, setImage] = useState<string | undefined>(hotel?.image);
   const [imageIsDeleting, setImageIsDeleting] = useState(false);
+  const [states, setStates] = useState<IState[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { toast } = useToast();
+  const router = useRouter();
+  const { getAllCountries, getCountryStates, getStateCities } = useLocation();
+  const countries = getAllCountries();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: hotel || {
       title: "",
       description: "",
       image: "",
@@ -96,8 +111,71 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
     },
   });
 
+  useEffect(() =>{
+
+    if(typeof image === 'string'){
+      form.setValue('image', image, {
+        shouldValidate: true,
+        shouldTouch: true,
+        shouldDirty: true
+      })
+    }
+  }
+  ,[image])
+
+  useEffect(() => {
+    const selectedCountry = form.watch("country");
+    const countryStates = getCountryStates(selectedCountry);
+    if (countryStates) {
+      setStates(countryStates);
+    }
+  }, [form.watch("country")]);
+
+  useEffect(() => {
+    const selectedCountry = form.watch("country");
+    const selectedState = form.watch("state");
+    const stateCities = getStateCities(selectedCountry, selectedState);
+    if (stateCities) {
+      setCities(stateCities);
+    }
+  }, [form.watch("country"), form.watch("state")]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    setIsLoading(true)
+    if(hotel){
+      axios.patch(`/api/hotel/${hotel.id}`, values).then((res) =>{
+        toast({
+          variant: "success",
+          description: "🎉 Hotel SuccessFully Updated",
+        });
+        router.push(`/hotel/${res.data.id}`)
+        setIsLoading(false)
+
+      }).catch((err)=>{
+        console.log(err)
+        toast({
+          variant: "destructive",
+          description: "something went wrong",
+        });
+      });
+
+    }else{
+      axios.post('/api/hotel', values).then((res)=>{
+        toast({
+          variant: "success",
+          description: "🎉 Hotel SuccessFully Created",
+        });
+        router.push(`/hotel/${res.data.id}`)
+        setIsLoading(false)
+      }).catch((err)=>{
+        console.log(err)
+        toast({
+          variant: "destructive",
+          description: "something went wrong",
+        });
+      })
+    }
   }
 
   const handleImageDelete = (image: string) => {
@@ -132,8 +210,8 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
           <h3 className="text-lg font-semibold">
             {hotel ? "Update your hotel!" : "Describe your hotel!"}
           </h3>
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1 flex flex-col gap-6">
+          <div className="flex flex-col md:grid-cols-2 gap-6">
+            <div className="flex-1 flex flex-col  gap-6">
               <FormField
                 control={form.control}
                 name="title"
@@ -148,26 +226,26 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hotel Description *</FormLabel>
+                    <FormDescription>
+                      Provide a detailed desciption of your hotel
+                    </FormDescription>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Beach Hotel is parked with many awesome amenities"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hotel Description *</FormLabel>
-                  <FormDescription>
-                    Provide a detailed desciption of your hotel
-                  </FormDescription>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Beach Hotel is parked with many awesome amenities"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <div>
               <FormLabel>Choose Amenities</FormLabel>
               <FormDescription>
@@ -465,7 +543,170 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
               )}
             />
           </div>
-          <div className="flex-1 flex flex-col gap-6">Part 2</div>
+          <div className="flex-1 flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Country *</FormLabel>
+                    <FormDescription>
+                      In which country is your property located?
+                    </FormDescription>
+                    <Select
+                      disabled={isLoading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue
+                          defaultValue={field.value}
+                          placeholder="Select a Country"
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map((country) => {
+                          return (
+                            <SelectItem
+                              key={country.isoCode}
+                              value={country.isoCode}
+                            >
+                              {country.name}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select State *</FormLabel>
+                    <FormDescription>
+                      In which state is your property located?
+                    </FormDescription>
+                    <Select
+                      disabled={isLoading || states.length < 1}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue
+                          defaultValue={field.value}
+                          placeholder="Select a State"
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map((state) => {
+                          return (
+                            <SelectItem
+                              key={state.isoCode}
+                              value={state.isoCode}
+                            >
+                              {state.name}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select City/Town </FormLabel>
+                  <FormDescription>
+                    In which city/town is your property located?
+                  </FormDescription>
+                  <Select
+                    disabled={isLoading || cities.length < 1}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue
+                        defaultValue={field.value}
+                        placeholder="Select a Town/City"
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.map((city) => {
+                        return (
+                          <SelectItem key={city.name} value={city.name}>
+                            {city.name}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="locationDesciption"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location Description *</FormLabel>
+                  <FormDescription>
+                    Provide a detailed desciption of your Location
+                  </FormDescription>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Located at the very end of the beach road!"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-between gap-2 flex-wrap">
+              {hotel ? (
+                <Button className="max-w-[150px]" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4" />
+                      Updating
+                    </>
+                  ) : (
+                    <>
+                      <PencilLine className="mr-2 h-4 w-4" />
+                      Update
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <>
+                  <Button className="max-w-[150px]" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4" />
+                        Creating
+                      </>
+                    ) : (
+                      <>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Create Hotel
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </form>
       </Form>
     </div>
