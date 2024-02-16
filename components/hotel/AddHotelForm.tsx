@@ -52,6 +52,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import AddRoomForm from "../room/AddRoomForm";
+import { Separator } from "../ui/separator";
+import RoomCard from "../room/RoomCard";
 
 interface AddHotelFormProps {
   hotel: HotelWithRooms | null;
@@ -262,6 +264,7 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
           <h3 className="text-lg font-semibold">
             {hotel ? "Update your hotel!" : "Describe your hotel!"}
           </h3>
+          <div className="grid grid-cols-2 gap-6">
           <div className="flex flex-col md:grid-cols-2 gap-6">
             <div className="flex-1 flex flex-col  gap-6">
               <FormField
@@ -826,7 +829,21 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
                   </Button>
                 </>
               )}
+
             </div>
+            {hotel && !!hotel.rooms.length && (
+  <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+    <div>
+      <Separator />
+      <h3 className="text-lg font-semibold my-4">Hotel Rooms</h3>
+      {hotel.rooms.map((room) => (
+        <RoomCard key={room.id} hotel={hotel} room={room} />
+      ))}
+    </div>
+  </div>
+)}
+
+          </div>
           </div>
         </form>
       </Form>
