@@ -59,7 +59,7 @@ model Room {
   mountainView   Boolean @default(false)
   airCondition   Boolean @default(false)
   soundProofed   Boolean @default(false)
-  hotelId        String
+  hotelId        String?
 
   Hotel Hotel? @relation(fields: [hotelId], references: [id], onDelete: Cascade)
 
@@ -71,7 +71,7 @@ model Room {
 model Booking {
   id                String   @id @default(uuid()) @map("_id")
   userName          String
-  hotelId           String
+  hotelId           String?
   roomId            String
   hotelOwnerId      String
   startDate         DateTime
