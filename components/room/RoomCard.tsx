@@ -28,6 +28,7 @@ import {
   Users,
   UtensilsCrossed,
   VolumeX,
+  Wand2,
   Wifi,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
@@ -49,6 +50,8 @@ import { DatePickerWithRange } from "./DateRangePicker";
 import { DateRange } from "react-day-picker";
 import { differenceInCalendarDays } from "date-fns";
 import { Checkbox } from "../ui/checkbox";
+import { useAuth } from "@clerk/nextjs";
+import useBookRoom from "@/hooks/useBookRoom";
 
 interface RoomCardProps {
   hotel?: Hotel & {
@@ -59,7 +62,9 @@ interface RoomCardProps {
 }
 
 const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
+  const {setRoomData, paymentIntentId, setClientSecret, setPaymentIntentId} = useBookRoom();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [bookingIsLoading, setBookingIsLoading] = useState<boolean>(false);
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>()
   const [totalPrice, setTotalPrice] = useState(room.roomPrice);
@@ -69,6 +74,7 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+  const {userId}  = useAuth()
   const isHotelDetailsPage = pathname.includes("hotel-details");
 
   useEffect(() =>{
@@ -128,6 +134,78 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
         });
       });
   };
+
+  const handleBookRoom = () => {
+    if(!userId) return  toast({
+      variant: "destructive",
+      description: "Opps! make sure you are logged in",
+    });
+
+    if (!hotel?.userId) return toast({
+      variant: "destructive",
+      description: "Something went wrong, reflesh the page and try again",
+    })
+
+    if(date?.from && date?.to){
+    setBookingIsLoading(true);
+
+    const bookingRoomData = {
+      room,
+      totalPrice,
+      breakFastIncluded: includeBreakFast,
+      startDate: date.from,
+      endDate: date.to,
+    }
+
+    setRoomData(bookingRoomData)
+
+    fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        booking:{
+          hotelOwnerId: hotel.userId,
+          hotelId: hotel.id,
+          roomId: room.id,
+          startDate: date.from,
+          endDate: date.to,
+          breakFastIncluded: includeBreakFast,
+          totalPrice: totalPrice
+        },
+        payment_intent_id: paymentIntentId
+      })
+    }).then((res) =>{
+      setBookingIsLoading(false)
+      if(res.status === 401){
+        return router.push('/login')
+      }
+
+      return res.json()
+
+    }).then((data) => {
+      console.log("Received data:", data); 
+      setClientSecret(data.paymentIntent?.client_secret)
+      setPaymentIntentId(data.paymentIntent?.id)
+      router.push('/book-room')
+
+    }).catch((error:any) =>{
+      console.log('Error:', error)
+      toast({
+        variant: "destructive",
+        description: `ERROR! ${error.message}`,
+      });
+    })
+
+    }else{
+      toast({
+        variant: "destructive",
+        description: "Opps! Select Date",
+      });
+
+    }
+  }
 
   return (
     <Card>
@@ -272,6 +350,11 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
               </div>
             }
             <div>Total Price: <span className="font-bold">${totalPrice}</span> for<span>{days} Days</span></div>
+
+            <Button onClick={handleBookRoom} disabled={bookingIsLoading} type="button">
+            {bookingIsLoading ? <Loader2 className="mr-2 h-4 w-4"/> : <Wand2 className="mr-2 h-4 w-4"/> }
+            {bookingIsLoading ?  'Loading...' : 'Book Room' }
+            </Button>
           </div>
          : 
           <div className="flex w-full justify-between">

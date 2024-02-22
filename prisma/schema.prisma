@@ -7,17 +7,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 model Hotel {
   id                 String    @id @default(uuid()) @map("_id")
   userId             String
-  title              String    // Changed from @db.Text to String
-  description        String    // Changed from @db.LongText to String
+  title              String // Changed from @db.Text to String
+  description        String // Changed from @db.LongText to String
   image              String
   country            String
   state              String
   city               String
-  locationDesciption String    // Changed from @db.LongText to String
+  locationDesciption String // Changed from @db.LongText to String
   gym                Boolean   @default(false)
   spa                Boolean   @default(false)
   bar                Boolean   @default(false)
@@ -34,13 +33,12 @@ model Hotel {
   updatedAt          DateTime  @default(now())
   rooms              Room[]
   bookings           Booking[]
-
 }
 
 model Room {
   id             String  @id @default(uuid()) @map("_id")
   title          String
-  description    String  // Changed from @db.LongText to String
+  description    String // Changed from @db.LongText to String
   bedCount       Int     @default(0)
   guestCount     Int     @default(0)
   bathroomCount  Int     @default(0)
@@ -71,6 +69,8 @@ model Room {
 model Booking {
   id                String   @id @default(uuid()) @map("_id")
   userName          String
+  userEmail         String
+  userId            String
   hotelId           String?
   roomId            String
   hotelOwnerId      String
