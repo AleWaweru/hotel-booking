@@ -33,7 +33,7 @@ const useBookRoom = create<BookRoomStore>()(
       setPaymentIntentId: (paymentIntentId: string) => {
         set({ paymentIntentId });
       },
-      setClientSecret: (clientSecret: string) => {
+      setClientSecret: (clientSecret: string ) => {
         set({ clientSecret });
       },
       resetBookRoom: () => {

@@ -1,8 +1,11 @@
-"use client"
+
+import BookRoomClient from "@/components/booking/BookRoomClient";
 
 const BookRoomForm = () => {
   return (
-    <div>Book Room</div>
+    <div className="p-8">
+      <BookRoomClient/>
+    </div>
   )
 }
 

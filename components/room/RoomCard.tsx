@@ -34,7 +34,7 @@ import {
 import { Separator } from "../ui/separator";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "../ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +48,7 @@ import axios from "axios";
 import { useToast } from "../ui/use-toast";
 import { DatePickerWithRange } from "./DateRangePicker";
 import { DateRange } from "react-day-picker";
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, eachDayOfInterval } from "date-fns";
 import { Checkbox } from "../ui/checkbox";
 import { useAuth } from "@clerk/nextjs";
 import useBookRoom from "@/hooks/useBookRoom";
@@ -76,6 +76,7 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
   const { toast } = useToast();
   const {userId}  = useAuth()
   const isHotelDetailsPage = pathname.includes("hotel-details");
+  const isBookRoom = pathname.includes('book-room')
 
   useEffect(() =>{
      if(date && date.from && date.to){
@@ -97,6 +98,23 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
       }
      }
   }, [date, room.roomPrice, includeBreakFast]);
+
+  const disableDates = useMemo(()=>{
+    let dates: Date[] = []
+
+    const roomBookings = bookings.filter(booking => booking.roomId === room.id)
+
+    roomBookings.forEach(booking =>{
+      const range = eachDayOfInterval({
+        start: new Date(booking.startDate),
+        end: new Date(booking.endDate)
+      })
+      dates = [...dates, ...range]
+    })
+    
+    return dates
+
+  }, [bookings])
 
   const handleDialogueOpen = () => {
     setOpen((prev) => !prev);
@@ -186,8 +204,8 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
 
     }).then((data) => {
       console.log("Received data:", data); 
-      setClientSecret(data.paymentIntent?.client_secret)
-      setPaymentIntentId(data.paymentIntent?.id)
+      setClientSecret(data.paymentIntent.client_secret)
+      setPaymentIntentId(data.paymentIntent.id)
       router.push('/book-room')
 
     }).catch((error:any) =>{
@@ -333,12 +351,13 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
         </div>
         <Separator />
       </CardContent>
+      {!isBookRoom && 
       <CardFooter>
         {isHotelDetailsPage ? 
           <div className="flex flex-col gap-6">
             <div>
             <h4 className="mb-2">Select days you will spend in this room</h4>
-            <DatePickerWithRange className=""  date={date} setDate={setDate}/>
+            <DatePickerWithRange className=""  date={date} setDate={setDate} disabledDates={disableDates}/>
             </div>
             {
               room.breakFastPrice > 0 && <div>
@@ -404,6 +423,7 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
           </div>
         }
       </CardFooter>
+      }
     </Card>
   );
 };
