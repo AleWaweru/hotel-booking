@@ -57,3 +57,37 @@ export async function DELETE(
     return new NextResponse("Internal server error", { status: 500 });
   }
 }
+
+
+export async function GET(
+  req: Request,
+  { params }: { params: { Id: string } }
+) {
+  try {
+    const { userId } = auth();
+    if(!params.Id){
+        return new NextResponse('Hotel Id is required', {status:400})
+    }
+
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    const bookings = await prismadb.booking.findMany({
+        where: {
+          paymentStatus: true,
+            roomId: params.Id,
+            endDate: {
+              gt: yesterday,
+            },
+        },
+    });
+    return NextResponse.json(bookings);
+  } catch (error) {
+    console.log("Error at /api/booking/Id GET", error);
+    return new NextResponse("Internal server error", { status: 500 });
+  }
+}

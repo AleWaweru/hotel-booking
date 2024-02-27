@@ -59,7 +59,7 @@ const HotelCard = ({hotel}: {hotel: HotelWithRooms}) => {
                         </>
                         }
                     </div>
-                    {isMyHotels && <Button onClick={()=>router.push(`/hotel${hotel.id}`)} variant="outline">Edit</Button>}
+                    {isMyHotels && <Button onClick={()=>router.push(`/hotel/${hotel.id}`)} variant="outline">Edit</Button>}
 
                 </div>
 
