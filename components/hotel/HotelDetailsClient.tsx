@@ -9,6 +9,7 @@ import { Car, Clapperboard, Dumbbell, MapPin, ShoppingBasket, Utensils, Wine } f
 import { FaSpa, FaSwimmer } from "react-icons/fa";
 import {MdDryCleaning} from "react-icons/md";
 import RoomCard from "../room/RoomCard";
+import Maps from "../Maps";
 
 const HotelDetailsClient = ({
   hotel,
@@ -24,7 +25,7 @@ const HotelDetailsClient = ({
   return (
     <div className="flex flex-col gap-6 pb-2">
       <div
-        className="aspect-square overflow-hidden relative w-full 
+        className=" overflow-hidden relative w-full 
         h-[200px] md:h-[400px] rounded-lg
         "
       >
@@ -71,6 +72,7 @@ const HotelDetailsClient = ({
           </div>
           </div>}
       </div>
+      <Maps/>
     </div>
   );
 };

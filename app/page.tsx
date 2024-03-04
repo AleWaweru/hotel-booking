@@ -1,5 +1,6 @@
 import { getHotels } from "@/actions/getHotels";
 import HotelList from "@/components/hotel/HotelList";
+import HomePage from "./landing/page";
 
 interface HomeProps{
   searchParams: {
@@ -16,7 +17,9 @@ export default async function Home({searchParams}: HomeProps) {
   if(!hotels) return <div>No hotels found....</div>
   return (
    <div>
+    {/* <HomePage/> */}
     <HotelList hotels={hotels}/>
    </div>
   );
 }
+

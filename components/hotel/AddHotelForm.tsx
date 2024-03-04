@@ -846,6 +846,7 @@ const AddHotelForm = ({ hotel }: AddHotelFormProps) => {
               )}
             </div>
           </div>
+          
         </form>
       </Form>
     </div>
