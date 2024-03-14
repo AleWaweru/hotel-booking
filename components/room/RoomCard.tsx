@@ -232,7 +232,7 @@ const RoomCard = ({ hotel, room, bookings = [] }: RoomCardProps) => {
         <CardDescription>{room.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="aspect-square overflow-hidden relative h-[200px] rounded-lg">
+        <div className="aspect-square overflow-hidden relative  rounded-lg">
           <Image
             fill
             src={room.image}

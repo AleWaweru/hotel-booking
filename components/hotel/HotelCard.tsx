@@ -5,7 +5,7 @@ import { HotelWithRooms } from "./AddHotelForm";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import AmenityItem from "../AmenityItem";
-import { Dumbbell, MapPin, Waves } from "lucide-react";
+import { Dumbbell, MapPin } from "lucide-react";
 import useLocation from "@/hooks/useLocation";
 import { Button } from "../ui/button";
 import { FaSwimmer } from "react-icons/fa";
@@ -25,13 +25,13 @@ const HotelCard = ({hotel}: {hotel: HotelWithRooms}) => {
     >
         <div className="flex gap-2 bg-background/50 border border-primary/10 rounded-lg">
             <div className="
-            flex-1 aspect-square overflow-hidden relative w-full h-[210px] rounded-s-lg
+            flex-1 aspect-square overflow-hidden relative w-full  rounded-s-lg
             ">
                 <Image
                 fill
                 src={hotel.image}
                 alt={hotel.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover "
                 />
             </div>
             <div className="flex-1 flex flex-col justify-between h-[210px] gap-1 p-1 py-2 text-sm">
