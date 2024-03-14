@@ -14,14 +14,13 @@ const Navbar = () => {
   const { userId } = useAuth();
   return (
     <div className="sticky top-0 z-50 border border-b-primary/10 bg-secondary">
-      {/* Add z-50 to ensure the navbar appears above other content */}
       <Container>
         <div className="flex justify-between items-center">
           <div
             className="flex items-center gap-1 cursor-pointer"
             onClick={() => router.push("/")}
           >
-            {/* <Image src="/images/logo.png" alt="logo" width="100" height="30" className="bg-blue-500"/> */}
+            <Image src="/images/logo.png" alt="logo" width="60" height="30" className="bg-blue-500"/>
             <div className="font-bold text-xl">Comfort Home</div>
           </div>
           <SearchInput />
