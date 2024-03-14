@@ -14,7 +14,6 @@ const Navbar = () => {
   const { userId } = useAuth();
   return (
     <div className="sticky top-0 z-50 border border-b-primary/10 bg-secondary">
-      {/* Add z-50 to ensure the navbar appears above other content */}
       <Container>
         <div className="flex justify-between items-center">
           <div
