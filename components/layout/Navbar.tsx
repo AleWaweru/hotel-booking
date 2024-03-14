@@ -20,7 +20,7 @@ const Navbar = () => {
             className="flex items-center gap-1 cursor-pointer"
             onClick={() => router.push("/")}
           >
-            {/* <Image src="/images/logo.png" alt="logo" width="100" height="30" className="bg-blue-500"/> */}
+            <Image src="/images/logo.png" alt="logo" width="60" height="30" className="bg-blue-500"/>
             <div className="font-bold text-xl">Comfort Home</div>
           </div>
           <SearchInput />
